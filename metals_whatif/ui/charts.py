@@ -69,7 +69,6 @@ def plot_heatmap(
     value_suffix="",
     color_midpoint=None,
 ):
-    """Heatmap استاندارد تحلیل حساسیت (df با برچسب‌های آماده نمایش)."""
 
     values = df.to_numpy(dtype=float)
     x_labels = list(df.columns)
@@ -226,7 +225,7 @@ def plot_heatmap(
         type="category",
         categoryorder="array",
         categoryarray=y_labels,
-        autorange="reversed",   # اولین سطر در بالای نمودار
+        autorange="reversed",   
         tickmode="array",
         tickvals=y_labels,
         ticktext=y_labels,
@@ -239,5 +238,22 @@ def plot_heatmap(
         fixedrange=False,
         automargin=True,
     )
-    
+
+    # اضافه کردن واترمارک به مرکز نمودار
+    fig.add_annotation(
+        text="@themohammadm",  
+        xref="paper", 
+        yref="paper",
+        x=0.5, 
+        y=0.5,
+        showarrow=False,
+        font=dict(
+            family=PERSIAN_FONT_FAMILY,
+            size=80,  
+            color="rgba(150, 150, 150, 0.12)"  
+        ),
+        textangle=-30, 
+        align="center",
+    )
+
     return fig
