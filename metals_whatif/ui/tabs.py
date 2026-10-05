@@ -10,9 +10,14 @@ from metals_whatif.core import (
     DashboardInputs,
 )
 
-from .assets import ASSET_VIEWS
+from .assets import ASSET_VIEWS, AssetView
 from .components import render_bubble_matrix, render_price_matrix
 from .styles import section_heading
+
+_ACTIVE_KEY = "active_asset"
+_LAST_KEY = "_last_active_asset"
+_VIEWS_BY_ID = {v.key.value: v for v in ASSET_VIEWS}
+
 
 def _certificate_notice(
     metal_name: str,
@@ -62,19 +67,48 @@ def _render_notice(key: AssetKey, inputs: DashboardInputs) -> None:
             ),
         )
 
+
+def _render_asset(
+    view: AssetView,
+    results: Dict[AssetKey, AnalysisResult],
+    inputs: DashboardInputs,
+) -> None:
+    result = results[view.key]
+    section_heading(view.subheader)
+    st.caption(view.caption)
+    _render_notice(view.key, inputs)
+
+    render_price_matrix(result.price, view)
+    render_bubble_matrix(result.bubble, result.market_price, view)
+
+
+def _keep_selection() -> None:
+    """جلوگیری از لغو انتخاب: با کلیک روی گزینه‌ی فعال، قبلی برمی‌گردد."""
+    current = st.session_state.get(_ACTIVE_KEY)
+    if current is None:
+        st.session_state[_ACTIVE_KEY] = st.session_state.get(
+            _LAST_KEY, ASSET_VIEWS[0].key.value
+        )
+    else:
+        st.session_state[_LAST_KEY] = current
+
+
 def render_tabs(
     results: Dict[AssetKey, AnalysisResult], inputs: DashboardInputs
 ) -> None:
-    tabs = st.tabs([view.tab_title for view in ASSET_VIEWS])
+    st.session_state.setdefault(_ACTIVE_KEY, ASSET_VIEWS[0].key.value)
 
-    for tab, view in zip(tabs, ASSET_VIEWS):
-        result = results[view.key]
+    selected_id = st.segmented_control(
+        "دارایی",
+        options=list(_VIEWS_BY_ID),
+        format_func=lambda k: _VIEWS_BY_ID[k].tab_title,
+        label_visibility="collapsed",
+        key=_ACTIVE_KEY,
+        on_change=_keep_selection,
+    )
 
-        with tab:
-            section_heading(view.subheader)   # قبلاً: st.subheader(view.subheader)
-            st.caption(view.caption)
+    view = ASSET_VIEWS[0]
+    if selected_id is not None:
+        view = _VIEWS_BY_ID.get(selected_id, view)
 
-            _render_notice(view.key, inputs)
-
-            render_price_matrix(result.price, view)
-            render_bubble_matrix(result.bubble, result.market_price, view)
+    _render_asset(view, results, inputs)

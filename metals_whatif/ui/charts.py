@@ -5,6 +5,12 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
+import functools
+import time
+
+
+
+
 from .labels import rtl_isolate
 from .styles import PERSIAN_FONT_FAMILY
 
@@ -149,7 +155,6 @@ def plot_heatmap(
         )
     )
 
-    # لایه متن (Scatter) برای کنترل رنگ متن هر سلول
     text_x, text_y, text_values, text_color_values = [], [], [], []
 
     for r, y_label in enumerate(y_labels):

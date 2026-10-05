@@ -29,18 +29,11 @@ class SensitivityMatrix:
         )
 
 
-def build_matrix(
-    fn: Callable,
-    row_axis: ScenarioAxis,
-    col_axis: ScenarioAxis,
-) -> SensitivityMatrix:
-    """
-    fn(row_value, col_value) باید با آرایه‌های numpy سازگار باشد.
-    سطرها = row_axis، ستون‌ها = col_axis.
-    """
+def build_matrix(fn, row_axis, col_axis) -> SensitivityMatrix:
     rows = np.asarray(row_axis.values(), dtype=float)
     cols = np.asarray(col_axis.values(), dtype=float)
 
     values = np.asarray(fn(rows[:, None], cols[None, :]), dtype=float)
-
+    values = np.broadcast_to(values, (rows.size, cols.size)).copy()
+    values.setflags(write=False) 
     return SensitivityMatrix(values=values, row_axis=row_axis, col_axis=col_axis)

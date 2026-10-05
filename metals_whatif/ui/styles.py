@@ -69,6 +69,16 @@ h1, h2, h3, h4, h5, h6,
     direction: rtl !important;
     text-align: right !important;
 }
+
+/* راست‌چین و منعطف کردن دکمه‌های انتخاب دارایی */
+div[data-testid="stSegmentedControl"],
+div[data-testid="stRadio"] > div[role="radiogroup"] {
+    direction: rtl !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
 </style>
 """
 

@@ -8,17 +8,18 @@ from metals_whatif.ui.tabs import render_tabs
 
 
 def main() -> None:
-    configure_page()  # باید اولین دستور Streamlit باشد
+    configure_page()  
     inject_css()
 
     inputs = collect_dashboard_inputs()
 
     try:
         results = run_analysis(inputs)
-    except EmptyScenarioError:
+    except EmptyScenarioError as exc:
         st.error(
-            "⚠️ با تنظیمات فعلی، یکی از بازه‌های دلار، طلا، نقره، مس یا روی "
-            "خالی شده است. گام تغییرات یا تعداد سناریوهای پایین را کاهش دهید."
+            f"⚠️ با تنظیمات فعلی، بازه‌ی این موارد خالی شده است: "
+            f"{'، '.join(exc.axis_names)}. "
+            "گام تغییرات یا تعداد سناریوهای پایین را کاهش دهید."
         )
         st.stop()
 

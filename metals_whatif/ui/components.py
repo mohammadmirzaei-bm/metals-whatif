@@ -36,14 +36,14 @@ def render_price_matrix(matrix: SensitivityMatrix, view: AssetView) -> None:
         number_format=",.0f",
         hover_format=",.0f",
     )
-    st.plotly_chart(figure, use_container_width=True, config=PLOTLY_CONFIG)
+    st.plotly_chart(figure, width="stretch", config=PLOTLY_CONFIG)
 
     with st.expander("📋 مشاهده جدول داده‌های قیمت"):
         st.dataframe(
             df.style.format("{:,.0f}").background_gradient(
                 cmap="Blues", axis=None
             ),
-            use_container_width=True,
+            width='stretch',
             height=400,
         )
 
@@ -86,7 +86,8 @@ def render_bubble_matrix(
         value_suffix="٪",
         color_midpoint=0,
     )
-    st.plotly_chart(figure, use_container_width=True, config=PLOTLY_CONFIG)
+    st.plotly_chart(figure, width="stretch", config=PLOTLY_CONFIG)
+
 
     max_abs = float(np.abs(df.to_numpy()).max())
 
@@ -95,6 +96,6 @@ def render_bubble_matrix(
             df.style.format("{:,.2f}%").background_gradient(
                 cmap="RdYlGn_r", axis=None, vmin=-max_abs, vmax=max_abs
             ),
-            use_container_width=True,
+            width='stretch',
             height=400,
         )

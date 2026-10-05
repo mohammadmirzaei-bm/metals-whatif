@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-
+from factories import make_inputs
 from metals_whatif.core import (
     AssetKey,
     CertificateParams,
@@ -10,19 +10,6 @@ from metals_whatif.core import (
     ScenarioAxis,
     run_analysis,
 )
-
-
-def make_inputs(**overrides):
-    params = dict(
-        usd=ScenarioAxis(200_000, 5_000, 4, 4),
-        gold=ScenarioAxis(4000, 50, 4, 4),
-        silver=ScenarioAxis(50, 10, 4, 4),
-        copper=ScenarioAxis(14_000, 250, 4, 4),
-        zinc=ScenarioAxis(3000, 100, 5, 6),
-    )
-    params.update(overrides)
-    return DashboardInputs(**params)
-
 
 def test_all_assets_are_computed():
     results = run_analysis(make_inputs())
@@ -132,3 +119,57 @@ def test_silver_cert_bubble_with_market_price():
 def test_silver_cert_shape_follows_silver_axis():
     results = run_analysis(make_inputs())
     assert results[AssetKey.SILVER_CERT].price.values.shape == (9, 9)
+
+
+from metals_whatif.core import (
+    AssetKey, EmptyScenarioError, MarketPrices, ScenarioAxis, run_analysis,
+)
+from metals_whatif.core import service
+
+BUBBLE_BASED = (AssetKey.GOLD_18K, AssetKey.MAZANEH, AssetKey.SILVER_999)
+CERT_BASED = (AssetKey.SILVER_CERT, AssetKey.COPPER, AssetKey.ZINC)
+
+
+def test_bubble_pct_affects_only_bubble_based_assets():
+    # کلید کش اگر ناقص باشد، نتیجه‌ی کهنه برمی‌گردد
+    a = run_analysis(make_inputs(bubble_pct=0))
+    b = run_analysis(make_inputs(bubble_pct=20))
+    for key in BUBBLE_BASED:
+        assert not np.allclose(a[key].price.values, b[key].price.values)
+    for key in CERT_BASED:
+        assert np.array_equal(a[key].price.values, b[key].price.values)
+
+
+def test_results_identical_with_and_without_cache():
+    inputs = make_inputs()
+    first = run_analysis(inputs)
+    service.clear_cache()
+    second = run_analysis(inputs)
+    for key in AssetKey:
+        assert np.array_equal(first[key].price.values, second[key].price.values)
+
+
+def test_repeated_run_reuses_same_matrix_object():
+    inputs = make_inputs()
+    a = run_analysis(inputs)[AssetKey.ZINC].price
+    b = run_analysis(inputs)[AssetKey.ZINC].price
+    assert a is b
+
+
+@pytest.mark.parametrize("bad_price", [0, -5])
+def test_non_positive_market_price_gives_no_bubble(bad_price):
+    inputs = make_inputs(market_prices=MarketPrices(zinc=bad_price))
+    assert run_analysis(inputs)[AssetKey.ZINC].bubble is None
+
+
+def test_all_empty_axes_are_reported():
+    empty = ScenarioAxis(-10, 1, 0, 0)
+    with pytest.raises(EmptyScenarioError) as exc:
+        run_analysis(make_inputs(usd=empty, copper=empty))
+    assert set(exc.value.axis_names) == {"دلار", "مس"}
+
+
+def test_prices_increase_along_both_axes():
+    m = run_analysis(make_inputs())[AssetKey.GOLD_18K].price.values
+    assert (np.diff(m, axis=0) > 0).all()
+    assert (np.diff(m, axis=1) > 0).all()
