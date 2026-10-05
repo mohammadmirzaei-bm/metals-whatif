@@ -1,4 +1,4 @@
-"""نقطه ورود داشبورد: streamlit run app.py"""
+import time
 import streamlit as st
 
 from metals_whatif.core import EmptyScenarioError, run_analysis
@@ -13,6 +13,7 @@ def main() -> None:
 
     inputs = collect_dashboard_inputs()
 
+    t0 = time.perf_counter()
     try:
         results = run_analysis(inputs)
     except EmptyScenarioError as exc:
@@ -22,9 +23,18 @@ def main() -> None:
             "گام تغییرات یا تعداد سناریوهای پایین را کاهش دهید."
         )
         st.stop()
+    t1 = time.perf_counter()
 
     st.markdown("---")
     render_tabs(results, inputs)
+    t2 = time.perf_counter()
+
+    print(
+        f"[timing] محاسبه: {(t1 - t0) * 1000:.1f} ms | "
+        f"رندر تب‌ها: {(t2 - t1) * 1000:.1f} ms",
+        flush=True,
+    )
 
 
-main()
+if __name__ == "__main__":
+    main()
